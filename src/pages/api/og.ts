@@ -1,18 +1,18 @@
+import type { APIRoute } from 'astro';
 import satori from 'satori';
 import type { SatoriOptions } from 'satori';
 import sharp from 'sharp';
 import type { ReactElement } from 'react';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
+export const GET: APIRoute = async ({ url }) => {
   try {
-    const { score = '0', total = '5', message = '' } = req.query;
+    const searchParams = url.searchParams;
+    const score = searchParams.get('score') || '0';
+    const total = searchParams.get('total') || '5';
+    const message = searchParams.get('message') || '';
 
     // Calculate percentage for background color
-    const percentage = (parseInt(score as string) / parseInt(total as string)) * 100;
+    const percentage = (parseInt(score) / parseInt(total)) * 100;
     const scoreColor = percentage === 100 ? '#22c55e' : // green
                       percentage >= 80 ? '#3b82f6' : // blue
                       percentage >= 60 ? '#eab308' : // yellow
@@ -130,14 +130,17 @@ export default async function handler(
     const svg = await satori(element, options);
     const png = await sharp(Buffer.from(svg)).png().toBuffer();
 
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    res.send(png);
+    return new Response(png, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
+    });
   } catch (error) {
     console.error('Error generating image:', error);
-    res.status(500).json({
-      error: 'Error generating image',
-      details: error instanceof Error ? error.message : 'Unknown error',
+    return new Response('Error generating image', {
+      status: 500,
+      statusText: error instanceof Error ? error.message : 'Unknown error',
     });
   }
-}
+};
