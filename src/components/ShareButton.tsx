@@ -61,10 +61,44 @@ export default function ShareButton({ score, total, message }: ShareButtonProps)
   const handleFacebookShare = () => {
     setIsSharing(true);
     const shareUrl = generateShareUrl();
-    const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-      shareUrl
-    )}&quote=${encodeURIComponent(shareText)}`;
-    window.open(fbShareUrl, '_blank', 'width=600,height=400');
+    const fbShareText = encodeURIComponent(shareText);
+    const fbShareUrlEncoded = encodeURIComponent(shareUrl);
+    
+    // Try to open Facebook app first
+    const fbAppUrl = `fb://share?text=${fbShareText}&url=${fbShareUrlEncoded}`;
+    const fbWebUrl = `https://www.facebook.com/sharer/sharer.php?u=${fbShareUrlEncoded}&quote=${fbShareText}`;
+  
+    // Function to open web fallback
+    const openWebFallback = () => {
+      window.open(fbWebUrl, '_blank', 'width=600,height=400');
+    };
+  
+    // Try to open the app
+    const tryOpenApp = () => {
+      // Set a timeout to detect if app open failed
+      const appTimeout = setTimeout(() => {
+        openWebFallback();
+      }, 1000);
+  
+      // Listen for blur event (app switching)
+      window.onblur = () => {
+        clearTimeout(appTimeout);
+        window.onblur = null;
+      };
+  
+      // Try to open the app
+      window.location.href = fbAppUrl;
+    };
+  
+    // Check if on mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+    if (isMobile) {
+      tryOpenApp();
+    } else {
+      openWebFallback();
+    }
+  
     trackShare('facebook');
     setIsSharing(false);
   };
