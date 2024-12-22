@@ -1,11 +1,26 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
+import Quiz from '../components/Quiz';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const score = Astro.url.searchParams.get('score');
+const total = Astro.url.searchParams.get('total');
+const message = Astro.url.searchParams.get('message');
+
+const title = score 
+  ? `I scored ${score}/${total} on the Church Name Quiz!`
+  : 'Church Name Quiz';
+
+const description = message || "Test your knowledge about the proper name of The Church of Jesus Christ of Latter-day Saints";
 ---
 
-<Layout>
-	<Welcome />
+<Layout 
+  title={title}
+  description={description}
+  score={parseInt(score || '0')}
+  total={parseInt(total || '5')}
+  message={message || undefined}
+>
+  <main class="container mx-auto px-4 py-8">
+    <Quiz client:load />
+  </main>
 </Layout>
